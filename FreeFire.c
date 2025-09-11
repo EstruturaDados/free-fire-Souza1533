@@ -30,17 +30,23 @@ void IniciarLista(Bolsa *lista){
 }
 
 
-// Insere um novo item na lista
-void InserirNaLista (Bolsa *lista){
+// Função: InserirNaLista
+// Descrição: Adiciona um novo item à mochila (lista sequencial) se houver espaço.
+// Parâmetro:
+//  - lista: ponteiro para a estrutura Bolsa que representa a mochila
+void InserirNaLista(Bolsa *lista){
+    // Verifica se a mochila já está cheia
     if (lista->qnt_items == MAX_ITEMS){
-        printf("\n- Erro: Lista cheia nao e possivel inserir -\n");
-        return;
+        printf("\n- Erro: Lista cheia, não é possível inserir -\n");
+        return; // Sai da função sem inserir
     }
 
+    // Variáveis temporárias para receber os dados do item
     char nome_item[MAX_STR_LEN];
     char tipo_item[MAX_STR_LEN];
     int quantidade_item;
 
+    // Solicita informações do usuário
     printf("\n---(  Adicionar novo item  )---\n");
     printf("\nNome do item: \n\n-> ");
     scanf("%s", nome_item);
@@ -51,13 +57,16 @@ void InserirNaLista (Bolsa *lista){
     printf("\nQuantidade do item: \n\n-> ");
     scanf("%d", &quantidade_item);
 
-    // Copia os valores para a struct
+    // Copia os valores para o próximo índice da lista
+    // Cada item é armazenado em uma struct Item dentro do vetor
     strcpy(lista->items[lista->qnt_items].nome, nome_item);
     strcpy(lista->items[lista->qnt_items].tipo, tipo_item);
     lista->items[lista->qnt_items].quantidade = quantidade_item;
   
-
+    // Incrementa a quantidade de itens na mochila
     lista->qnt_items++;
+
+    // Mensagem de confirmação
     printf("Item '%s' (%s) x%d inserido com sucesso!\n", nome_item, tipo_item, quantidade_item);
 }
 
@@ -76,8 +85,11 @@ void ListarItems(Bolsa *lista){
                lista->items[i].tipo,
                lista->items[i].quantidade);
     }
-
     printf("----------------------------------------------\n");
+    printf("\nPrecione ENTER para continuar: "); 
+
+    while(getchar() != '\n'); //limpa buffer
+    getchar();// Espera o usuário apertar Enter
 }
 
 // Remove um item pelo nome
@@ -88,70 +100,116 @@ void RemoverItemDaLista(Bolsa *lista, const char *nome_item) {
     for (int i = 0; i < lista->qnt_items; i++) {
         if (strcmp(lista->items[i].nome, nome_item) == 0) {
             pos = i;
-            break;
+
+            // Desloca os itens seguintes para "tampar o buraco"
+            for (int j = pos; j < lista->qnt_items - 1; j++) {
+                lista->items[j] = lista->items[j + 1]; // copia struct inteira (nome + tipo)
+            }
+
+            lista->qnt_items--;
+            printf("\n-Item '%s' removido com sucesso!\n", nome_item);
+            return;
         }
     }
-
-    if (pos == -1) {
-        printf("Erro: Item '%s' nao encontrado na lista\n", nome_item);
-        return;
-    }
-
-    // Desloca os itens seguintes para "tampar o buraco"
-    for (int j = pos; j < lista->qnt_items - 1; j++) {
-        lista->items[j] = lista->items[j + 1]; // copia struct inteira (nome + tipo)
-    }
-
-    lista->qnt_items--;
-    printf("\n-Item '%s' removido com sucesso!\n", nome_item);
+        printf("\nErro: Item '%s' nao encontrado na lista\n", nome_item);
 }
 
 
+int BuscarItemPorNome(Bolsa *lista, const char *nome_item){ 
+    // Percorre todos os itens da mochila
+    for (int i = 0; i < lista->qnt_items; i++) {
+        // Compara o nome do item atual com o nome buscado
+        if (strcmp(lista->items[i].nome, nome_item) == 0) {
+            printf("\nItem: %s Encontrado!\n", nome_item);
+            return 1; // Retorna 1 (verdadeiro) para a variável que chamou a função
+        }
+    }
+
+    // Se o loop terminar sem encontrar o item
+    printf("\nItem: %s Nao Encontrado!\n", nome_item);
+    return 0; // Retorna 0 (falso) para a variável que chamou a função
+}
 
 
-//Exibi Menu Principal
+// Função: ExibirMenu
+// Descrição: Exibe o menu principal da mochila de sobrevivência e
+// permite ao usuário escolher operações como inserir, listar,
+// buscar ou remover itens. Repete até o usuário escolher sair.
 void ExibirMenu(Bolsa *lista) {
     int escolha;
-    printf("\n===============================================\n");
-    printf("   MOCHILA DE SOBREVIVENCIA - CODIGO DA ILHA  \n");
-    printf("===============================================\n");
 
     do {
+        // Cabeçalho do menu
+        printf("\n===============================================\n");
+        printf("   MOCHILA DE SOBREVIVENCIA - CODIGO DA ILHA  \n");
+        printf("===============================================\n");
+
+        // Mostra quantidade de itens na mochila
         if(MAX_ITEMS != lista->qnt_items){
-            printf("\n----(  Items na Mochila: %d/10 )----\n\n", lista->qnt_items);
+            printf("\n---------(   Items na Mochila: %d/10  )---------\n\n", lista->qnt_items);
         } else {
-            printf("\n----(  Items na Mochila: %d/10 CHEIA!)----\n\n", lista->qnt_items);
+            printf("\n------(  Items na Mochila: %d/10 CHEIA! )------\n\n", lista->qnt_items);
         }
+
+        // Opções do menu
         printf("1. Novo Item (Loot)\n");
         printf("2. Listar Items\n");
-        printf("3. Remover Items\n");
-        printf("4. Sair.\n");
-        printf("---------------------------\n-> ");
+        printf("3. Buscar Item por nome\n");
+        printf("4. Remover Items\n");
+        printf("5. Sair.\n");
+        printf("-----------------------------------------------\n-> ");
         scanf("%d", &escolha);
-        
 
+        // Processa a escolha do usuário
         switch (escolha) {
-            case 1:
+
+            case 1: // Inserir novo item
                 InserirNaLista(lista);
                 break;
-            case 2:
+
+            case 2: // Listar todos os itens
                 ListarItems(lista);
                 break;
-            case 3: {
+
+            case 3: { // Buscar item por nome
+                // {} cria um escopo local para variáveis do case
+                char nome[MAX_STR_LEN];
+                printf("\n---(  Buscar item na mochila  )---\n");
+                printf("\nDigite o nome do item que deseja buscar:\n-> ");
+                scanf("%s", nome);
+                while (getchar() != '\n'); // limpa ENTER do teclado
+                
+                // Chama a função de busca e recebe 1 se encontrado ou 0 se não
+                int encontrado = BuscarItemPorNome(lista, nome);
+
+                // Decide ação com base no retorno da função
+                if(encontrado) {
+                    printf("Você pode agora usar ou remover o item.\n");
+                } else {
+                    printf("Tente adicionar o item primeiro.\n");
+                }
+                break;
+            }
+
+            case 4: { // Remover item
+                // {} cria escopo local para a variável nome
                 char nome[MAX_STR_LEN];
                 printf("\nDigite o nome do item para remover:\n-> ");
                 scanf("%s", nome);
+                while (getchar() != '\n'); // limpa ENTER do teclado
                 RemoverItemDaLista(lista, nome);
                 break;
             }
-            case 4:
+
+            case 5: // Sair do programa
                 printf("\nSaindo...\n");
                 break;
-            default:
+
+            default: // Opção inválida
                 printf("\nOpcao invalida!\n");
         }
 
-    } while (escolha != 4);
+    } while (escolha != 5); // Repete o menu até o usuário escolher sair
 }
 
 
@@ -160,4 +218,3 @@ int main(){
     IniciarLista(&lista);
     ExibirMenu(&lista);
 }
-    
